@@ -13,7 +13,7 @@ import { cellToString } from "./excelCell";
 
 const LEGACY_TRANSACTIONS_SHEET_NAME = "transactions";
 const YEAR_SHEET_NAME_PATTERN = /^\d{4}$/;
-const HEADER_COLUMNS = [
+export const HEADER_COLUMNS = [
   "id",
   "date",
   "source",
@@ -26,7 +26,7 @@ const HEADER_COLUMNS = [
   "transferId",
 ] as const;
 
-type HeaderColumn = (typeof HEADER_COLUMNS)[number];
+export type HeaderColumn = (typeof HEADER_COLUMNS)[number];
 type HeaderMap = Record<HeaderColumn, number>;
 type YearKey = string;
 
@@ -79,7 +79,7 @@ export interface TransactionStore {
   save: () => Promise<void>;
 }
 
-function normalizeHeaderName(value: string): string {
+export function normalizeHeaderName(value: string): string {
   return value.trim().toLowerCase();
 }
 

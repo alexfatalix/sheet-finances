@@ -6,6 +6,10 @@ import {
   importStatementsFromDirectory,
   type DuplicateTransactionInfo,
 } from "../services/importPipeline";
+import {
+  syncWorkbookToGoogleSheets,
+  type GoogleSheetsSyncResult,
+} from "../services/googleSheetsSync";
 
 const DEFAULT_OUT_PATH = "./data/transactions.xlsx";
 
@@ -46,6 +50,38 @@ function printUsage(): void {
       '  npx tsx src/cli/import-statement.ts --input "./statements/abank-jan.xlsx"',
     ].join("\n"),
   );
+}
+
+function printGoogleSheetsSyncResult(result: GoogleSheetsSyncResult): void {
+  if (result.status === "skipped") {
+    if (result.reason === "not_configured") {
+      console.log(
+        "Google Sheets sync: skipped (set GOOGLE_SHEETS_SPREADSHEET_ID and service account vars in .env).",
+      );
+      return;
+    }
+
+    if (result.reason === "no_target_years") {
+      console.log("Google Sheets sync: skipped (no target year sheets were produced).");
+      return;
+    }
+
+    console.log("Google Sheets sync: skipped (no local rows found for the target sheets).");
+    return;
+  }
+
+  console.log("Google Sheets sync:");
+  console.log(`Spreadsheet: ${result.spreadsheetId}`);
+  console.log(`Years: ${result.years.join(", ")}`);
+  console.log(`Appended: ${result.appended}`);
+  console.log(`Conflicts: ${result.conflicts}`);
+
+  for (const sheet of result.sheets) {
+    const created = sheet.created ? ", created" : "";
+    console.log(
+      `  ${sheet.year}: appended ${sheet.appended}, conflicts ${sheet.conflicts}${created}`,
+    );
+  }
 }
 
 function parseCliArgs(argv: string[]): CliArgs {
@@ -150,6 +186,8 @@ async function main(): Promise<void> {
     console.log(`Transfers matched: ${batch.totals.transfersMatched}`);
     console.log(`Parse errors: ${batch.totals.parseErrors}`);
     console.log(`Skipped files: ${batch.totals.skipped}`);
+    const syncResult = await syncWorkbookToGoogleSheets(outPath, batch.targetYears);
+    printGoogleSheetsSyncResult(syncResult);
     return;
   }
 
@@ -163,6 +201,8 @@ async function main(): Promise<void> {
   printDuplicateItems(result.duplicateItems);
   console.log(`Transfers matched: ${result.transfersMatched}`);
   console.log(`Parse errors: ${result.parseErrors}`);
+  const syncResult = await syncWorkbookToGoogleSheets(outPath, result.targetYears);
+  printGoogleSheetsSyncResult(syncResult);
 }
 
 main().catch((error) => {

@@ -60,6 +60,7 @@ export interface DuplicateTransactionInfo {
 
 export interface ImportStatementResult {
   source: TransactionSource;
+  targetYears: string[];
   parsed: number;
   rowsRead: number;
   parseErrors: number;
@@ -82,6 +83,7 @@ export interface ImportDirectorySkippedItem {
 export interface ImportDirectoryResult {
   items: ImportDirectoryItemResult[];
   skipped: ImportDirectorySkippedItem[];
+  targetYears: string[];
   totals: {
     parsed: number;
     rowsRead: number;
@@ -364,6 +366,7 @@ export async function importStatement(
   if (parsed.transactions.length === 0) {
     return {
       source,
+      targetYears: [],
       parsed: 0,
       rowsRead: parsed.rowsRead,
       parseErrors: parsed.parseErrors,
@@ -390,6 +393,7 @@ export async function importStatement(
 
   return {
     source,
+    targetYears,
     parsed: parsed.transactions.length,
     rowsRead: parsed.rowsRead,
     parseErrors: parsed.parseErrors,
@@ -433,11 +437,15 @@ export async function importStatementsFromDirectory(
     transfersMatched: 0,
     skipped: 0,
   };
+  const targetYears = new Set<string>();
 
   for (const filePath of filePaths) {
     try {
       const result = await importStatement(filePath, outPath);
       items.push({ filePath, result });
+      for (const year of result.targetYears) {
+        targetYears.add(year);
+      }
       totals.parsed += result.parsed;
       totals.rowsRead += result.rowsRead;
       totals.parseErrors += result.parseErrors;
@@ -456,6 +464,7 @@ export async function importStatementsFromDirectory(
   return {
     items,
     skipped,
+    targetYears: [...targetYears].sort((left, right) => left.localeCompare(right)),
     totals,
   };
 }
