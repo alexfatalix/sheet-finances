@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "csv-parse": "^6.1.0",
+    "dayjs": "^1.11.19",
+    "exceljs": "^4.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0"
+  }
+}
