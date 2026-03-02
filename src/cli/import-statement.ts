@@ -4,7 +4,6 @@ import { resolve } from "node:path";
 import {
   importStatement,
   importStatementsFromDirectory,
-  type DuplicateTransactionInfo,
 } from "../services/importPipeline";
 import {
   syncWorkbookToGoogleSheets,
@@ -17,25 +16,6 @@ interface CliArgs {
   input?: string;
   out: string;
   help: boolean;
-}
-
-function printDuplicateItems(items: DuplicateTransactionInfo[]): void {
-  if (items.length === 0) {
-    return;
-  }
-
-  console.log("Duplicate entries:");
-  for (const item of items) {
-    const base = `  [${item.kind}] ${item.date} ${item.amount} ${item.currency} ${item.description} (${item.account})`;
-    if (!item.matchedExisting) {
-      console.log(base);
-      continue;
-    }
-
-    console.log(
-      `${base} -> matches ${item.matchedExisting.date} ${item.matchedExisting.amount} ${item.matchedExisting.currency} ${item.matchedExisting.description} (${item.matchedExisting.account})`,
-    );
-  }
 }
 
 function printUsage(): void {
@@ -166,7 +146,6 @@ async function main(): Promise<void> {
       console.log(`Parsed: ${item.result.parsed}`);
       console.log(`Added: ${item.result.added}`);
       console.log(`Duplicates: ${item.result.duplicates}`);
-      printDuplicateItems(item.result.duplicateItems);
       console.log(`Transfers matched: ${item.result.transfersMatched}`);
       console.log(`Parse errors: ${item.result.parseErrors}`);
       console.log("");
@@ -198,7 +177,6 @@ async function main(): Promise<void> {
   console.log(`Parsed: ${result.parsed}`);
   console.log(`Added: ${result.added}`);
   console.log(`Duplicates: ${result.duplicates}`);
-  printDuplicateItems(result.duplicateItems);
   console.log(`Transfers matched: ${result.transfersMatched}`);
   console.log(`Parse errors: ${result.parseErrors}`);
   const syncResult = await syncWorkbookToGoogleSheets(outPath, result.targetYears);
